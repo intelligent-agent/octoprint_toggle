@@ -67,7 +67,6 @@ class TogglePlugin(
     def on_api_command(self, command, data):
         o = Operate()
         if command == "get_profiles":
-            self._logger.exception("get_profiles")
             printers = o.get_printers()
             default = o.get_default_printer()
             profiles = {}
@@ -94,7 +93,7 @@ class TogglePlugin(
                 return flask.jsonify(ok=1)
             return flask.jsonify(ok=0)
         elif command == "restart_toggle":
-            o.restart_redeem()
+            o.restart_toggle()
             return flask.jsonify(ok=1)
         elif command == "get_local":
             filename = os.path.join(self._settings.get(["path"]),"local.cfg")
@@ -163,7 +162,7 @@ class TogglePlugin(
 
         try:
             from_file = flask.request.values[input_upload_path]
-            to_file = "/etc/redeem/"+profile_name+".cfg"
+            to_file = "/etc/toggle/"+profile_name+".cfg"
             self._logger.info("Renaming {} to {}".format(from_file, to_file))
             os.rename(from_file, to_file)
         except IOError as e:
@@ -187,7 +186,7 @@ class TogglePlugin(
             (r"/download/(.*)", LargeResponseHandler, dict(path=self._settings.get(["path"]),
                                                            as_attachment=True,
                                                            path_validation=path_validation_factory(lambda path: not is_hidden_path(path),
-                                                                                                   status_code=404)))
+                                                                                                   status_code=401)))
         ]
 
 
@@ -235,6 +234,5 @@ def __plugin_load__():
 
     global __plugin_hooks__
     __plugin_hooks__ = {
-        "octoprint.comm.protocol.action": plugin.custom_action_handler, 
         "octoprint.server.http.routes": plugin.route_hook
     }
