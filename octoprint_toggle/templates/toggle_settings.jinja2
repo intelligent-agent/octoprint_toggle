@@ -1,0 +1,159 @@
+<h4>{{ _('General') }}</h4>
+
+<p>
+    The following section has all the printer configurations that are installed. 
+    If your printer is listed there, you can use that as a starting point for your printer configuration. 
+    If not, make a new file that matches your printer, and upload it through the "import profile" button. 
+    If you have local "quirks", you can upload a file called "local.cfg". Settings in that file will override any 
+    configs you have in the printer file. 
+</p>
+<p>
+    Please note that changing the config requires a restart of Toggle. There is a button for that in the corner there. 
+</p>
+<p>
+    For more info, see the <a href="http://wiki.thing-printer.com/index.php?title=Toggle">wiki page for Toggle</a>.    
+</p>
+<h4>{{ _('Profiles') }}</h4>
+<table class="table table-striped table-hover table-condensed table-hover">
+    <tbody >
+        <tr>
+            <td class="settings_plugin_toggle_profiles_key"><span class="icon-star" data-bind="invisible: true"></span><span data-bind="text: 'local'"></span></td>
+            <td class="settings_plugin_toggle_profiles_name">local.cfg</td>
+            <td class="settings_plugin_toggle_profiles_actions">
+                <a href="#" class="icon-edit" title="{{ _('Edit Profile') }}" data-bind="click: function() { $root.showEditLocalDialog() }"></a>
+                <a href="#" class="icon-download" title="{{ _('Download Profile') }}" data-bind="attr: {href: '/plugin/toggle/download/local.cfg'}"></a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+<div class="pull-left">
+    <h5>{{ _('printer.cfg') }}</h5>
+</div>
+<div class="pull-right">
+    <small>{{ _('Sort by') }}: <a href="#" data-bind="click: function() { profiles.changeSorting('id'); }">{{ _('Identifier') }} ({{ _('ascending') }})</a> | <a href="#" data-bind="click: function() { profiles.changeSorting('name'); }">{{ _('Name') }} ({{ _('ascending') }})</a></small>
+</div>
+<table class="table table-striped table-hover table-condensed table-hover">
+    <thead>
+    <tr>
+        <th class="settings_plugin_toggle_profiles_key">{{ _('Identifier') }}</th>
+        <th class="settings_plugin_toggle_profiles_name">{{ _('Name') }}</th>
+        <th class="settings_plugin_toggle_profiles_actions">{{ _('Actions') }}</th>
+    </tr>
+    </thead>
+    <tbody data-bind="foreach: profiles.paginatedItems">
+        <tr data-bind="attr: {title: description}">
+            <td class="settings_plugin_toggle_profiles_key"><span class="icon-star" data-bind="invisible: !isdefault()"></span> <span data-bind="text: key"></span></td>
+            <td class="settings_plugin_toggle_profiles_name" data-bind="text: name"></td>
+            <td class="settings_plugin_toggle_profiles_actions">
+                <a href="#" class="icon-star" title="{{ _('Make default') }}" data-bind="enable: !isdefault(), css: {disabled: isdefault()}, click: function() { if (!$data.isdefault()) { $root.makeProfileDefault($data); } }"></a>&nbsp;|&nbsp;
+                <a href="#" class="icon-trash" title="{{ _('Delete Profile') }}" data-bind="enable: !isdefault(), css: {disabled: isdefault()}, click: function() { if (!$data.isdefault()) { $root.removeProfile($data); } }"></a>&nbsp;|&nbsp;
+                <a href="#" class="icon-download" title="{{ _('Download Profile') }}" data-bind="attr: {href: refs.download}"></a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+<div class="pagination pagination-mini pagination-centered">
+    <ul>
+        <li data-bind="css: {disabled: profiles.currentPage() === 0}"><a href="#" data-bind="click: profiles.prevPage">«</a></li>
+    </ul>
+    <ul data-bind="foreach: profiles.pages">
+        <li data-bind="css: { active: $data.number === $root.profiles.currentPage(), disabled: $data.number === -1 }">
+            <a href="#" data-bind="text: $data.text, click: function() { $root.profiles.changePage($data.number); }"></a>
+        </li>
+    </ul>
+    <ul>
+        <li data-bind="css: {disabled: profiles.currentPage() === profiles.lastPage()}"><a href="#" data-bind="click: profiles.nextPage">»</a></li>
+    </ul>
+</div>
+
+<table class="table table-striped table-hover table-condensed table-hover">
+    <tbody >
+        <tr>
+            <td class="settings_plugin_toggle_profiles_key"><span class="icon-star" data-bind="invisible: true"></span><span data-bind="text: 'default'"></span></td>
+            <td class="settings_plugin_toggle_profiles_name">default.cfg</td>
+            <td class="settings_plugin_toggle_profiles_actions">
+                <a href="#" class="icon-download" title="{{ _('Download Profile') }}" data-bind="attr: {href: '/plugin/toggle/download/default.cfg'}"></a>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+
+<button class="btn pull-right" data-bind="click: function() { $root.showImportProfileDialog() }">{{ _('Import Profile...') }}</button>
+<button class="btn pull-left" data-bind="click: function() { $root.restarttoggle() }">{{ _('Restart toggle') }}</button>
+
+<div id="settings_plugin_toggle_import" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>{{ _('Import Existing toggle Profile') }}</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal">
+            <div class="control-group">
+                <label class="control-label">{{ _('Profile ini file') }}</label>
+                <div class="controls">
+                    <div class="input-prepend">
+                        <span class="btn fileinput-button">
+                            <span>{{ _('Browse...') }}</span>
+                            <input id="settings-toggle-import" type="file" name="file" data-url="{{ url_for("plugin.toggle.import_toggle_profile") }}">
+                        </span>
+                        <span class="add-on" data-bind="text: fileName"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">{{ _('Identifier') }}</label>
+                <div class="controls">
+                    <input type="text" class="input-block-level" data-bind="value: profileName, attr: {placeholder: placeholderName}">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">{{ _('Name') }}</label>
+                <div class="controls">
+                    <input type="text" class="input-block-level" data-bind="value: profileDisplayName, attr: {placeholder: placeholderDisplayName}">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">{{ _('Description') }}</label>
+                <div class="controls">
+                    <input type="text" class="input-block-level" data-bind="value: profileDescription, attr: {placeholder: placeholderDescription}">
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="controls">
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: profileAllowOverwrite"> {{ _('Overwrite existing file') }}
+                    </label>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">{{ _('Abort') }}</button>
+        <button class="btn btn-primary" id="settings-toggle-import-start">{{ _('Confirm') }}</button>
+    </div>
+</div>
+
+
+
+<div id="settings_plugin_toggle_editor" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>{{ _('Editor for local.cfg') }}</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal">
+            <textarea id="settings_plugin_toggle_textarea" style="width: 514px; height: 368px;">
+            </textarea> 
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">{{ _('Abort') }}</button>
+        <button class="btn btn-primary" data-bind="click: function() { $root.saveLocal() }">{{ _('Save changes') }}</button>
+    </div>
+
+</div>
+
+
