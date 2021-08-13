@@ -14,7 +14,7 @@ plugin_package = "octoprint_%s" % plugin_identifier
 plugin_name = "OctoPrint-Toggle"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.1"
+plugin_version = "0.2"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -27,7 +27,7 @@ plugin_author = "Elias Bakken"
 plugin_author_email = "elias@iagent.no"
 
 # The plugin's homepage URL. Can be overwritten within OctoPrint's internal data via __plugin_url__ in the plugin module
-plugin_url = "http://www.thing-printer.com"
+plugin_url = "http://www.iagent.no"
 
 # The plugin's license. Can be overwritten within OctoPrint's internal data via __plugin_license__ in the plugin module
 plugin_license = "AGPLv3"

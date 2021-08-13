@@ -244,7 +244,7 @@ def _sanitize_name(name):
 
 
 __plugin_name__ = "Toggle Plugin"
-
+__plugin_pythoncompat__ = ">=2.7,<4"
 
 def __plugin_load__():
     plugin = TogglePlugin()
