@@ -1,14 +1,15 @@
 import datetime
 import json, time
-import subprocess 
+import subprocess
 import os
 import logging
 import logging.handlers
 
 my_logger = logging.getLogger('MyLogger')
 my_logger.setLevel(logging.DEBUG)
-handler = logging.handlers.SysLogHandler(address = '/dev/log')
+handler = logging.handlers.SysLogHandler(address='/dev/log')
 my_logger.addHandler(handler)
+
 
 class Operate:
     def __init__(self):
@@ -19,14 +20,18 @@ class Operate:
         import glob
         blacklist = ["default.cfg", "printer.cfg", "local.cfg"]
         try:
-            files = [ os.path.basename(f) for f in glob.glob(self.path+"*.cfg") if os.path.isfile(os.path.join(self.path,f)) and os.path.basename(f) not in blacklist ]
+            files = [
+                os.path.basename(f) for f in glob.glob(self.path + "*.cfg")
+                if os.path.isfile(os.path.join(self.path, f))
+                and os.path.basename(f) not in blacklist
+            ]
             return files
-        except OSError: 
+        except OSError:
             return []
 
     def get_default_printer(self):
         """ Get the current printer """
-        real = os.path.realpath(self.path+"printer.cfg")
+        real = os.path.realpath(self.path + "printer.cfg")
         return os.path.basename(real)
 
     def choose_printer(self, filename):
@@ -35,8 +40,8 @@ class Operate:
         whitelist = self.get_printers()
         if filename not in whitelist:
             return False
-        filename = os.path.join(path,filename)
-        linkname = os.path.join(path,"printer.cfg")
+        filename = os.path.join(path, filename)
+        linkname = os.path.join(path, "printer.cfg")
         # Only unlink if exists
         if os.path.isfile(linkname):
             os.unlink(linkname)
@@ -47,11 +52,11 @@ class Operate:
         return False
 
     def delete_printer(self, filename):
-        full = self.path+filename 
+        full = self.path + filename
         if os.path.isfile(full):
             os.unlink(full)
             return True
-        return False        
+        return False
 
     def get_local(self, filename):
         with open(filename, "r+") as f:
@@ -61,10 +66,9 @@ class Operate:
         logging.info(data)
         with open(filename, "w+") as f:
             f.write(data)
-        
 
     def restart_toggle(self):
-        # Octo will need to have sudo privileges to restart redeem for this to work. 
+        # Octo will need to have sudo privileges to restart redeem for this to work.
         # Add "%octo ALL=NOPASSWD: /bin/systemctl restart redeem.service" to /etc/sudoers
         logging.warning("Restarting Toggle")
         subprocess.call("sudo systemctl restart toggle.service", shell=True)
