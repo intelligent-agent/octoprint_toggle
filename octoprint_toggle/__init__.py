@@ -118,6 +118,7 @@ class TogglePlugin(
     def import_toggle_profile(self):
         import datetime
         import tempfile
+        import shutil
 
         input_name = "file"
         input_upload_name = input_name + "." + self._settings.global_get(
@@ -174,7 +175,7 @@ class TogglePlugin(
             from_file = flask.request.values[input_upload_path]
             to_file = "/etc/toggle/" + profile_name + ".cfg"
             self._logger.info("Renaming {} to {}".format(from_file, to_file))
-            os.rename(from_file, to_file)
+            shutil.move(from_file, to_file)
         except IOError as e:
             self._logger.warn("Error renaming file" + str(e))
             return flask.make_response(
@@ -207,13 +208,13 @@ class TogglePlugin(
 
 
 def _check_config_file(config_file):
-    import ConfigParser
+    import configparser
     import logging
 
-    default = ConfigParser.SafeConfigParser()
+    default = configparser.SafeConfigParser()
     default.readfp(open("/etc/toggle/default.cfg"))
 
-    new = ConfigParser.SafeConfigParser()
+    new = configparser.SafeConfigParser()
     new.readfp(open(config_file))
 
     # Get list of changed values
