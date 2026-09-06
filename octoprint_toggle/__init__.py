@@ -12,6 +12,9 @@ import flask
 from octoprint.server.util.flask import redirect_to_tornado
 import octoprint.plugin
 import octoprint.settings
+import octoprint.events
+import random
+import string
 import time
 
 from .operate import Operate
@@ -21,13 +24,80 @@ class TogglePlugin(
         octoprint.plugin.TemplatePlugin, octoprint.plugin.SettingsPlugin,
         octoprint.plugin.StartupPlugin, octoprint.plugin.AssetPlugin,
         octoprint.plugin.BlueprintPlugin, octoprint.plugin.SimpleApiPlugin,
+        octoprint.plugin.EventHandlerPlugin,
         octoprint.plugin.OctoPrintPlugin):
+
+    # The account the touchscreen runs as. accessControl.autologinAs names it,
+    # and OctoPrint resolves that through find_user(), so it has to exist.
+    TOGGLE_USER = "toggle"
+
     def __init__(self):
         self._logger = logging.getLogger("octoprint.plugins.toggle")
 
     #~~ StartupPlugin
     def on_after_startup(self):
         self.path = self._settings.get(["path"])
+        self._ensure_toggle_user()
+
+    #~~ EventHandlerPlugin
+    def on_event(self, event, payload):
+        # The moment after the setup wizard: the owner has just created their
+        # admin account and logged in, so has_been_customized() has flipped and
+        # the toggle user can be created without suppressing the wizard.
+        if event == octoprint.events.Events.USER_LOGGED_IN:
+            self._ensure_toggle_user()
+
+    def _ensure_toggle_user(self):
+        """Create the account the touchscreen autologs in as, if it is missing.
+
+        Done here, inside OctoPrint, rather than by writing users.yaml from a
+        systemd unit. That mattered: FilebasedUserManager loads users.yaml in its
+        constructor and again only after OctoPrint itself saves it - there is no
+        mtime check and no file watch - so a user written from outside is
+        invisible to the running server until it restarts. autologin then finds
+        nothing (find_user returns None), silently declines, and the touchscreen
+        waits forever on a board whose wizard has been completed.
+
+        Going through the user manager also means OctoPrint hashes the password.
+        The old path wrote sha512(password + salt), OctoPrint 1.11 stores
+        argon2id, and the mismatch made the account unusable even when it existed.
+
+        Deliberately NOT created before the wizard has been completed.
+        OctoPrint decides its access-control step is needed by asking whether
+        users.yaml has any users at all - _is_acl_wizard_required() is
+        "not has_been_customized()" - so creating this account any earlier would
+        satisfy that check and ship a printer whose owner is never asked to set
+        an admin password.
+
+        The password is random and never used: the touchscreen authenticates by
+        accessControl.autologinLocal, which needs no credential. It exists only
+        because a user record has to have one, and being random means nobody can
+        log in as this account from anywhere else.
+        """
+        try:
+            if self._user_manager is None:
+                return
+            if not self._user_manager.has_been_customized():
+                self._logger.debug(
+                    "Setup wizard not completed yet - not creating the %s user",
+                    self.TOGGLE_USER)
+                return
+            if self._user_manager.find_user(self.TOGGLE_USER) is not None:
+                return
+            self._user_manager.add_user(
+                self.TOGGLE_USER,
+                "".join(random.choice(string.ascii_letters + string.digits)
+                        for _ in range(32)),
+                True,          # active
+                [],            # no extra permissions
+                ["users"],     # operator rights: STATUS, CONTROL, PRINT, FILES_*
+                overwrite=False)
+            self._logger.info("Created the %s user for the touchscreen",
+                              self.TOGGLE_USER)
+        except Exception:
+            # Never take OctoPrint down over this. A missing toggle user costs a
+            # touchscreen; an exception here would cost the whole plugin.
+            self._logger.exception("Could not create the %s user", self.TOGGLE_USER)
 
     #~~ SettingsPlugin
     def on_settings_save(self, data):
